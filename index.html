@@ -378,9 +378,6 @@ tr:hover td { background: #f8fafd; }
         <input id="login-password" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn-login" onclick="doLogin()">Sign In</button>
-      <div class="login-hint" id="login-hint-text">
-        Loading credentials…
-      </div>
     </div>
   </div>
 </div>
@@ -1637,7 +1634,6 @@ function startListeners() {
   listenCol('users', data => {
     if (data.length) {
       _cachedUsers = data;
-      updateLoginHint();
       if (document.getElementById('page-users') && document.getElementById('page-users').classList.contains('active')) renderUsersPage();
     }
   });
@@ -1675,21 +1671,6 @@ async function saveUsers(arr) {
     u.id = id;
     await fbSetDoc('users', id, u);
   }
-  updateLoginHint();
-}
-
-function updateLoginHint() {
-  const hint = document.getElementById('login-hint-text');
-  if (!hint) return;
-  const users = _cachedUsers || DEFAULT_USERS;
-  const adminUser  = users.find(u => u.role === 'admin');
-  const officeUser = users.find(u => u.role === 'office');
-  let lines = [];
-  if (adminUser)  lines.push('<strong>Admin:</strong> ' + adminUser.username  + ' / ' + adminUser.password);
-  if (officeUser) lines.push('<strong>Office:</strong> ' + officeUser.username + ' / ' + officeUser.password);
-  const teacherCount = users.filter(u => u.role === 'teacher').length;
-  hint.innerHTML = (lines.length ? lines.join(' &nbsp;|&nbsp; ') + '<br>' : '')
-    + '<span style="opacity:0.6;">Teacher accounts created by Admin in User Management.' + (teacherCount ? ' (' + teacherCount + ' active)' : '') + '</span>';
 }
 
 let currentUser = null;
@@ -1878,10 +1859,8 @@ document.getElementById('current-date').textContent = new Date().toLocaleDateStr
   if (ok) {
     if (statusEl) statusEl.innerHTML = '<span style="color:var(--green);">\u2705 Connected</span>';
     await getUsers();
-    updateLoginHint();
   } else {
     if (statusEl) statusEl.innerHTML = '<span style="color:var(--muted);">Not connected \u2014 configure below</span>';
-    updateLoginHint();
   }
 })();
 
@@ -1960,7 +1939,6 @@ async function connectFirebase() {
     showAlert('global-alert','success','✅ Firebase connected! Logging in will now start real-time sync for all staff.');
     // Bootstrap users if first time
     await getUsers();
-    updateLoginHint();
   } else {
     if (statusEl) statusEl.innerHTML = '<span style="color:var(--red);">❌ Connection failed</span>';
     showAlert('global-alert','error','❌ Firebase connection failed. Check config and ensure Firestore is enabled.');
